@@ -1,0 +1,126 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="sar_parachute_demo">
+
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system"
+            name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-air-pressure-system"
+            name="gz::sim::systems::AirPressure"/>
+    <plugin filename="gz-sim-magnetometer-system"
+            name="gz::sim::systems::Magnetometer"/>
+
+    <light name="sunlight" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 500 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.5 0.2 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>200 200</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>200 200</size></plane></geometry>
+          <material>
+            <ambient>0.3 0.5 0.2 1</ambient>
+            <diffuse>0.3 0.5 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="survivor_1">
+      <static>true</static>
+      <pose>20 10 0.05 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>1.5 0.5 0.1</size></box></geometry>
+          <material><ambient>1.0 0.2 0.0 1</ambient><diffuse>1.0 0.2 0.0 1</diffuse></material>
+        </visual>
+        <collision name="col"><geometry><box><size>1.5 0.5 0.1</size></box></geometry></collision>
+      </link>
+    </model>
+
+    <model name="survivor_2">
+      <static>true</static>
+      <pose>-15 25 0.05 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>1.5 0.5 0.1</size></box></geometry>
+          <material><ambient>1.0 0.2 0.0 1</ambient><diffuse>1.0 0.2 0.0 1</diffuse></material>
+        </visual>
+        <collision name="col"><geometry><box><size>1.5 0.5 0.1</size></box></geometry></collision>
+      </link>
+    </model>
+
+    <include>
+      <uri>model://iris_with_ardupilot</uri>
+      <n>iris_with_ardupilot</n>
+      <pose>0 0 0.195 0 0 0</pose>
+    </include>
+
+    <model name="parachute">
+      <pose>0 0 -5 0 0 0</pose>
+      <static>false</static>
+      <link name="canopy">
+        <inertial>
+          <mass>0.15</mass>
+          <inertia><ixx>0.02</ixx><iyy>0.02</iyy><izz>0.02</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <visual name="dome">
+          <geometry><sphere><radius>0.9</radius></sphere></geometry>
+          <material>
+            <ambient>1.0 0.35 0.0 0.8</ambient>
+            <diffuse>1.0 0.35 0.0 0.8</diffuse>
+          </material>
+        </visual>
+        <collision name="dome_col"><geometry><sphere><radius>0.9</radius></sphere></geometry></collision>
+        <visual name="line_1">
+          <pose>0.25 0.25 -0.7 0 0.3 0.785</pose>
+          <geometry><cylinder><radius>0.006</radius><length>1.4</length></cylinder></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material>
+        </visual>
+        <visual name="line_2">
+          <pose>-0.25 0.25 -0.7 0 -0.3 2.356</pose>
+          <geometry><cylinder><radius>0.006</radius><length>1.4</length></cylinder></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material>
+        </visual>
+        <visual name="line_3">
+          <pose>-0.25 -0.25 -0.7 0 0.3 3.927</pose>
+          <geometry><cylinder><radius>0.006</radius><length>1.4</length></cylinder></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material>
+        </visual>
+        <visual name="line_4">
+          <pose>0.25 -0.25 -0.7 0 -0.3 5.498</pose>
+          <geometry><cylinder><radius>0.006</radius><length>1.4</length></cylinder></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material>
+        </visual>
+        <visual name="payload">
+          <pose>0 0 -1.6 0 0 0</pose>
+          <geometry><box><size>0.35 0.35 0.15</size></box></geometry>
+          <material><ambient>0.2 0.2 0.8 1</ambient><diffuse>0.2 0.2 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

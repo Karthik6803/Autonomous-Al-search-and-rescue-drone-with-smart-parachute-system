@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAR Drone — Ground Control Station</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;color:#e8e8e8;font-size:13px;min-height:100vh}
+  h1{font-size:16px;font-weight:600;letter-spacing:.03em}
+  header{background:#181c27;border-bottom:1px solid #2a2f3e;padding:10px 20px;display:flex;align-items:center;gap:16px}
+  .conn-dot{width:9px;height:9px;border-radius:50%;background:#E24B4A;flex-shrink:0;transition:background .3s}
+  .conn-dot.on{background:#639922}
+  #conn-label{font-size:12px;color:#888;margin-left:4px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+  .badge.armed{background:#27500A;color:#C0DD97}
+  .badge.disarmed{background:#2c2c2c;color:#888}
+  main{display:grid;grid-template-columns:1fr 320px;gap:0;height:calc(100vh - 45px)}
+  .left{padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+  .right{background:#181c27;border-left:1px solid #2a2f3e;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+  .card{background:#1e2330;border:1px solid #2a2f3e;border-radius:10px;padding:12px 14px}
+  .card-title{font-size:11px;font-weight:600;color:#667;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .metric{background:#13161f;border:1px solid #2a2f3e;border-radius:8px;padding:8px 10px;text-align:center}
+  .metric .lbl{font-size:10px;color:#556;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+  .metric .val{font-size:20px;font-weight:600;color:#e8e8e8}
+  .val.ok{color:#639922}.val.warn{color:#EF9F27}.val.err{color:#E24B4A}
+  .btn{background:#1e2330;border:1px solid #2a2f3e;color:#ccc;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;user-select:none}
+  .btn:hover{background:#252b3a;border-color:#3a4055;color:#fff}
+  .btn:active{transform:scale(0.97)}
+  .btn.blue{background:#0d1f3c;border-color:#185FA5;color:#85B7EB}
+  .btn.blue:hover{background:#112447}
+  .btn.green{background:#1a2e10;border-color:#3B6D11;color:#97C459}
+  .btn.green:hover{background:#1f3814}
+  .btn.red{background:#2e1212;border-color:#A32D2D;color:#F09595}
+  .btn.red:hover{background:#381515}
+  .btn.amber{background:#2e1f06;border-color:#854F0B;color:#EF9F27}
+  .btn.amber:hover{background:#3a2708}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .joy-wrap{display:flex;justify-content:space-around;align-items:flex-start;gap:12px}
+  .joy-zone{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .joy-title{font-size:10px;color:#556;text-transform:uppercase;letter-spacing:.06em}
+  .joy{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:4px}
+  .jb{width:42px;height:42px;background:#13161f;border:1px solid #2a2f3e;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .12s;color:#aaa}
+  .jb:hover{background:#252b3a;color:#fff;border-color:#3a4055}
+  .jb:active{background:#185FA5;border-color:#378ADD;color:#fff;transform:scale(0.93)}
+  .jb.center{background:#13161f;cursor:default;color:#333}
+  .jb.empty{background:transparent;border-color:transparent;cursor:default}
+  .step-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .step-row label{font-size:11px;color:#556;min-width:60px}
+  .step-row input[type=range]{flex:1;accent-color:#378ADD}
+  .step-row span{font-size:11px;color:#aaa;min-width:36px;text-align:right}
+  .log{background:#0d0f17;border:1px solid #1e2330;border-radius:8px;padding:10px 12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;height:200px;overflow-y:auto}
+  .log-line{padding:1.5px 0;line-height:1.5}
+  .log-line .ts{color:#445}
+  .log-line .msg{color:#aaa}
+  .log-line.ok .msg{color:#639922}
+  .log-line.info .msg{color:#378ADD}
+  .log-line.warn .msg{color:#EF9F27}
+  .log-line.error .msg{color:#E24B4A}
+  .wp-form{display:flex;flex-direction:column;gap:6px}
+  .wp-form input{background:#13161f;border:1px solid #2a2f3e;border-radius:6px;padding:6px 10px;color:#e8e8e8;font-size:12px;width:100%}
+  .wp-form input:focus{outline:none;border-color:#378ADD}
+  .wp-form input::placeholder{color:#445}
+  .section{border-bottom:1px solid #2a2f3e;padding-bottom:12px;margin-bottom:2px}
+  .alt-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .alt-row label{font-size:11px;color:#556;min-width:80px}
+  .alt-row input[type=range]{flex:1;accent-color:#378ADD}
+  .alt-row span{font-size:11px;min-width:36px;text-align:right;color:#aaa}
+  #map-placeholder{background:#13161f;border:1px solid #2a2f3e;border-radius:8px;height:180px;display:flex;align-items:center;justify-content:center;color:#334;font-size:12px;flex-direction:column;gap:4px}
+  .safety-strip{background:#1a0d0d;border:1px solid #A32D2D;border-radius:10px;padding:12px 14px}
+  .safety-strip .card-title{color:#E24B4A}
+  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#13161f}::-webkit-scrollbar-thumb{background:#2a2f3e;border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="conn-dot" id="conn-dot"></div>
+  <h1>SAR Drone — Ground Control Station</h1>
+  <span id="conn-label">Connecting…</span>
+  <span class="badge disarmed" id="arm-badge">DISARMED</span>
+  <span id="mode-badge" style="margin-left:auto;font-size:12px;color:#667">—</span>
+</header>
+
+<main>
+  <!-- ── LEFT COLUMN ── -->
+  <div class="left">
+
+    <!-- Telemetry HUD -->
+    <div class="card">
+      <div class="card-title">Live telemetry</div>
+      <div class="metrics" style="margin-bottom:8px">
+        <div class="metric"><div class="lbl">Altitude</div><div class="val" id="t-alt">—</div></div>
+        <div class="metric"><div class="lbl">Speed</div><div class="val" id="t-spd">—</div></div>
+        <div class="metric"><div class="lbl">Battery</div><div class="val" id="t-bat">—</div></div>
+        <div class="metric"><div class="lbl">Heading</div><div class="val" id="t-hdg">—</div></div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="lbl">GPS fix</div><div class="val" id="t-gps">—</div></div>
+        <div class="metric"><div class="lbl">Satellites</div><div class="val" id="t-sats">—</div></div>
+        <div class="metric"><div class="lbl">Roll</div><div class="val" id="t-roll">—</div></div>
+        <div class="metric"><div class="lbl">Pitch</div><div class="val" id="t-pitch">—</div></div>
+      </div>
+    </div>
+
+    <!-- Arm / Takeoff / Land -->
+    <div class="card section">
+      <div class="card-title">Arm &amp; flight</div>
+      <div class="grid3" style="margin-bottom:8px">
+        <div class="btn green" onclick="api('/api/arm','POST')">Arm motors</div>
+        <div class="btn" onclick="api('/api/disarm','POST')">Disarm</div>
+        <div class="btn amber" onclick="api('/api/rtl','POST')">Return home</div>
+      </div>
+      <div class="grid2">
+        <div class="btn blue" onclick="takeoff()">Takeoff</div>
+        <div class="btn" onclick="api('/api/land','POST')">Land</div>
+      </div>
+      <div class="alt-row">
+        <label>Takeoff alt</label>
+        <input type="range" min="5" max="60" value="20" step="1"
+               id="alt-slider" oninput="document.getElementById('alt-val').textContent=this.value+'m'">
+        <span id="alt-val">20m</span>
+      </div>
+    </div>
+
+    <!-- Flight modes -->
+    <div class="card section">
+      <div class="card-title">Flight mode</div>
+      <div class="grid3">
+        <div class="btn blue" onclick="setMode('GUIDED')">Guided</div>
+        <div class="btn" onclick="setMode('LOITER')">Loiter</div>
+        <div class="btn" onclick="setMode('ALT_HOLD')">Alt hold</div>
+        <div class="btn" onclick="setMode('STABILIZE')">Stabilize</div>
+        <div class="btn" onclick="setMode('POSHOLD')">Pos hold</div>
+        <div class="btn" onclick="setMode('ACRO')">Acro</div>
+      </div>
+    </div>
+
+    <!-- Manual joystick -->
+    <div class="card section">
+      <div class="card-title">Manual control</div>
+      <div class="joy-wrap">
+        <div class="joy-zone">
+          <div class="joy-title">Translate</div>
+          <div class="joy">
+            <div class="jb empty"></div>
+            <div class="jb" onclick="move('N')" title="North">▲</div>
+            <div class="jb empty"></div>
+            <div class="jb" onclick="move('W')" title="West">◀</div>
+            <div class="jb center">+</div>
+            <div class="jb" onclick="move('E')" title="East">▶</div>
+            <div class="jb empty"></div>
+            <div class="jb" onclick="move('S')" title="South">▼</div>
+            <div class="jb empty"></div>
+          </div>
+        </div>
+        <div class="joy-zone">
+          <div class="joy-title">Alt &amp; Yaw</div>
+          <div class="joy">
+            <div class="jb" onclick="move('YAW_L')" title="Yaw left">↺</div>
+            <div class="jb" onclick="move('UP')" title="Up">▲</div>
+            <div class="jb" onclick="move('YAW_R')" title="Yaw right">↻</div>
+            <div class="jb empty"></div>
+            <div class="jb center">+</div>
+            <div class="jb empty"></div>
+            <div class="jb empty"></div>
+            <div class="jb" onclick="move('DOWN')" title="Down">▼</div>
+            <div class="jb empty"></div>
+          </div>
+        </div>
+      </div>
+      <div class="step-row">
+        <label>Step size</label>
+        <input type="range" min="1" max="30" value="5" step="1"
+               id="step-slider" oninput="document.getElementById('step-val').textContent=this.value+'m'">
+        <span id="step-val">5m</span>
+      </div>
+    </div>
+
+    <!-- Keyboard hint -->
+    <div style="font-size:11px;color:#334;padding:0 2px">
+      Keyboard: W/A/S/D = N/W/S/E &nbsp;|&nbsp; Q/E = yaw &nbsp;|&nbsp; R/F = up/down &nbsp;|&nbsp; T = takeoff &nbsp;|&nbsp; L = land
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT COLUMN ── -->
+  <div class="right">
+
+    <!-- Go-to waypoint -->
+    <div class="card section">
+      <div class="card-title">Go to waypoint</div>
+      <div class="wp-form">
+        <input id="wp-lat" type="number" step="0.000001" placeholder="Latitude  e.g. -35.363261">
+        <input id="wp-lon" type="number" step="0.000001" placeholder="Longitude e.g. 149.165230">
+        <input id="wp-alt" type="number" value="20" placeholder="Altitude (m)">
+        <div class="btn blue" onclick="gotoWP()">Fly to waypoint</div>
+      </div>
+    </div>
+
+    <!-- Mission tasks -->
+    <div class="card section">
+      <div class="card-title">Mission tasks</div>
+      <div class="grid2" style="margin-bottom:8px">
+        <div class="btn blue" onclick="api('/api/sar_search','POST')">SAR search</div>
+        <div class="btn" onclick="api('/api/hover','POST')">Hover</div>
+      </div>
+      <div class="grid2" style="margin-bottom:8px">
+        <div class="btn" onclick="orbit()">Orbit target</div>
+        <div class="btn" onclick="api('/api/survey','POST')">Area survey</div>
+      </div>
+      <div class="btn" style="margin-bottom:0" onclick="api('/api/photo','POST')">Capture photo</div>
+    </div>
+
+    <!-- Map placeholder -->
+    <div class="card section">
+      <div class="card-title">Position</div>
+      <div id="map-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#334" stroke-width="1.5">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+        <span id="pos-label" style="color:#445">Waiting for GPS…</span>
+      </div>
+    </div>
+
+    <!-- Safety -->
+    <div class="safety-strip">
+      <div class="card-title">Safety</div>
+      <div class="grid2">
+        <div class="btn amber" onclick="deployChute()">Deploy parachute</div>
+        <div class="btn red" onclick="killMotors()">Kill motors</div>
+      </div>
+    </div>
+
+    <!-- Event log -->
+    <div class="card" style="flex:1">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+        Event log
+        <span onclick="clearLog()" style="font-size:10px;cursor:pointer;color:#445;text-transform:none;font-weight:400">clear</span>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const log = document.getElementById('log');
+
+function addLog(ts, msg, level=''){
+  const d = document.createElement('div');
+  d.className = 'log-line'+(level?' '+level:'');
+  d.innerHTML = `<span class="ts">[${ts}]</span> <span class="msg">${msg}</span>`;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function clearLog(){ log.innerHTML = ''; }
+
+async function api(url, method='GET', body=null){
+  try{
+    const opts = {method, headers:{'Content-Type':'application/json'}};
+    if(body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    return await r.json();
+  }catch(e){
+    addLog(ts(), 'Request failed: '+e, 'error');
+  }
+}
+
+const ts = () => new Date().toTimeString().slice(0,8);
+
+function takeoff(){
+  const alt = parseInt(document.getElementById('alt-slider').value);
+  api('/api/arm','POST').then(()=>{
+    setTimeout(()=> api('/api/takeoff','POST',{alt}), 1500);
+  });
+}
+
+function setMode(m){ api('/api/mode','POST',{mode:m}); }
+
+function move(dir){
+  const step = parseInt(document.getElementById('step-slider').value);
+  api('/api/move','POST',{direction:dir, step});
+}
+
+function gotoWP(){
+  const lat = parseFloat(document.getElementById('wp-lat').value);
+  const lon = parseFloat(document.getElementById('wp-lon').value);
+  const alt = parseFloat(document.getElementById('wp-alt').value)||20;
+  if(isNaN(lat)||isNaN(lon)){addLog(ts(),'Enter valid lat/lon','warn');return;}
+  api('/api/goto','POST',{lat,lon,alt});
+}
+
+function orbit(){
+  const r = prompt('Orbit radius (m):', '15');
+  if(r) api('/api/orbit','POST',{radius:parseFloat(r),speed:3});
+}
+
+function deployChute(){
+  if(confirm('Deploy parachute? This will kill motors and disarm.')){
+    api('/api/parachute','POST');
+  }
+}
+
+function killMotors(){
+  if(confirm('KILL MOTORS? Drone will fall immediately.')){
+    api('/api/kill','POST');
+  }
+}
+
+// Telemetry polling
+async function updateTelem(){
+  try{
+    const d = await fetch('/api/telemetry').then(r=>r.json());
+    if(!d.connected) return;
+
+    document.getElementById('conn-dot').classList.add('on');
+    document.getElementById('conn-label').textContent =
+      'Connected — '+(d.firmware||'ArduPilot');
+
+    const badge = document.getElementById('arm-badge');
+    badge.textContent = d.armed ? 'ARMED' : 'DISARMED';
+    badge.className = 'badge '+(d.armed?'armed':'disarmed');
+    document.getElementById('mode-badge').textContent = d.mode||'';
+
+    const setText = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+    setText('t-alt', d.alt+'m');
+    setText('t-spd', d.speed+'m/s');
+    setText('t-hdg', d.heading+'°');
+    setText('t-roll', d.roll+'°');
+    setText('t-pitch', d.pitch+'°');
+    setText('t-sats', d.gps_sats??'—');
+
+    const batEl = document.getElementById('t-bat');
+    if(d.batt_pct!=null){
+      batEl.textContent = d.batt_pct+'%';
+      batEl.className = 'val '+(d.batt_pct>40?'ok':d.batt_pct>20?'warn':'err');
+    }
+
+    const gpsEl = document.getElementById('t-gps');
+    const gpsLabels = ['None','No fix','2D','3D','DGPS','RTK'];
+    gpsEl.textContent = gpsLabels[d.gps_fix]||d.gps_fix;
+    gpsEl.className = 'val '+(d.gps_fix>=3?'ok':d.gps_fix>=2?'warn':'err');
+
+    if(d.lat && d.lon){
+      document.getElementById('pos-label').textContent =
+        d.lat.toFixed(5)+', '+d.lon.toFixed(5);
+    }
+  }catch(e){}
+}
+
+// SSE event log
+const evtSource = new EventSource('/api/events');
+evtSource.onmessage = e => {
+  const d = JSON.parse(e.data);
+  addLog(d.ts, d.msg, d.level||'');
+};
+
+// Keyboard controls
+document.addEventListener('keydown', e => {
+  if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  const map = {
+    'w':'N','s':'S','a':'W','d':'E',
+    'r':'UP','f':'DOWN','q':'YAW_L','e':'YAW_R',
+    't':()=>takeoff(),'l':()=>api('/api/land','POST'),
+    'h':()=>api('/api/hover','POST'),
+  };
+  const action = map[e.key.toLowerCase()];
+  if(!action) return;
+  e.preventDefault();
+  if(typeof action === 'function') action();
+  else move(action);
+});
+
+setInterval(updateTelem, 500);
+addLog(ts(), 'GCS dashboard loaded', 'info');
+</script>
+</body>
+</html>

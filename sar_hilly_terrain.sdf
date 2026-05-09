@@ -1,0 +1,570 @@
+<?xml version="1.0" ?>
+<!--
+  SAR Hilly Terrain World — Gazebo Harmonic
+  ==========================================
+  Features:
+    - Hilly terrain using heightmap mesh approach (box approximation for compatibility)
+    - 25 pine trees scattered across hillsides
+    - 5 boulders / rock clusters
+    - 3 survivor markers (orange hi-vis rectangles) at different elevations
+    - Iris drone with ArduPilot plugin
+    - Parachute model (starts hidden at z=-10)
+    - Atmospheric lighting (evening/golden hour)
+    - Ground camp marker
+
+  Launch:
+    export GZ_SIM_RESOURCE_PATH=$HOME/cognitive_drone/ardupilot_gazebo/models:$HOME/cognitive_drone/worlds
+    gz sim -v4 -r sar_hilly_terrain.sdf
+-->
+<sdf version="1.9">
+  <world name="sar_hilly_terrain">
+
+    <!-- ── Physics ─────────────────────────────────────────────────────── -->
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!-- ── Plugins ─────────────────────────────────────────────────────── -->
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system"
+            name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-air-pressure-system"
+            name="gz::sim::systems::AirPressure"/>
+    <plugin filename="gz-sim-magnetometer-system"
+            name="gz::sim::systems::Magnetometer"/>
+
+    <!-- ── Lighting — golden hour / evening ───────────────────────────── -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 500 0 0 0</pose>
+      <diffuse>0.95 0.82 0.62 1</diffuse>
+      <specular>0.4 0.35 0.2 1</specular>
+      <direction>-0.6 0.3 -0.7</direction>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+    </light>
+
+    <light name="ambient_fill" type="directional">
+      <pose>0 0 200 0 0 0</pose>
+      <diffuse>0.3 0.4 0.5 1</diffuse>
+      <specular>0.1 0.1 0.15 1</specular>
+      <direction>0.3 -0.2 -0.9</direction>
+      <cast_shadows>false</cast_shadows>
+    </light>
+
+    <!-- ── Sky ─────────────────────────────────────────────────────────── -->
+    <scene>
+      <sky>
+        <clouds>
+          <speed>5</speed>
+        </clouds>
+      </sky>
+      <ambient>0.4 0.4 0.5 1</ambient>
+      <background>0.55 0.65 0.75 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         TERRAIN — Main flat base + hill mounds
+         ════════════════════════════════════════════════════════════════ -->
+
+    <!-- Base ground plane (green valley floor) -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="col">
+          <geometry><plane><normal>0 0 1</normal><size>500 500</size></plane></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><plane><normal>0 0 1</normal><size>500 500</size></plane></geometry>
+          <material>
+            <ambient>0.28 0.42 0.18 1</ambient>
+            <diffuse>0.32 0.48 0.20 1</diffuse>
+            <specular>0.05 0.07 0.03 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hill 1 — large central ridge (north area) -->
+    <model name="hill_1">
+      <static>true</static>
+      <pose>0 40 0 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>60 40 8</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>60 40 8</size></box></geometry>
+          <material>
+            <ambient>0.26 0.38 0.16 1</ambient>
+            <diffuse>0.30 0.44 0.18 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hill 1 peak -->
+    <model name="hill_1_peak">
+      <static>true</static>
+      <pose>5 42 8 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>30 20 6</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>30 20 6</size></box></geometry>
+          <material>
+            <ambient>0.38 0.32 0.24 1</ambient>
+            <diffuse>0.42 0.36 0.28 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hill 2 — east slope -->
+    <model name="hill_2">
+      <static>true</static>
+      <pose>35 -10 0 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>40 30 6</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>40 30 6</size></box></geometry>
+          <material>
+            <ambient>0.25 0.36 0.15 1</ambient>
+            <diffuse>0.28 0.40 0.17 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hill 2 secondary mound -->
+    <model name="hill_2b">
+      <static>true</static>
+      <pose>42 -8 6 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>18 14 5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>18 14 5</size></box></geometry>
+          <material>
+            <ambient>0.36 0.30 0.22 1</ambient>
+            <diffuse>0.40 0.34 0.26 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hill 3 — west hump -->
+    <model name="hill_3">
+      <static>true</static>
+      <pose>-30 20 0 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>35 25 5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>35 25 5</size></box></geometry>
+          <material>
+            <ambient>0.27 0.39 0.17 1</ambient>
+            <diffuse>0.31 0.45 0.19 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hill 3 peak -->
+    <model name="hill_3_peak">
+      <static>true</static>
+      <pose>-32 22 5 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>16 12 4</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>16 12 4</size></box></geometry>
+          <material>
+            <ambient>0.35 0.29 0.21 1</ambient>
+            <diffuse>0.39 0.33 0.25 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hill 4 — south-east ridge -->
+    <model name="hill_4">
+      <static>true</static>
+      <pose>20 -30 0 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>50 20 4</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>50 20 4</size></box></geometry>
+          <material>
+            <ambient>0.24 0.35 0.14 1</ambient>
+            <diffuse>0.27 0.39 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         TREES — 25 pine trees across hillsides
+         Each tree = trunk cylinder + canopy cone approximated by cylinders
+         ════════════════════════════════════════════════════════════════ -->
+
+    <!-- Tree macro: trunk + 3 canopy layers -->
+    <!-- Tree 1 -->
+    <model name="tree_01"><static>true</static><pose>8 35 8 0 0 0</pose>
+      <link name="trunk"><visual name="v"><geometry><cylinder><radius>0.18</radius><length>3.5</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual><collision name="c"><geometry><cylinder><radius>0.18</radius><length>3.5</length></cylinder></geometry></collision></link></model>
+    <model name="tree_01_c1"><static>true</static><pose>8 35 10.5 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>2.2</radius><length>2.5</length></cylinder></geometry><material><ambient>0.12 0.28 0.10 1</ambient><diffuse>0.14 0.32 0.12 1</diffuse></material></visual></link></model>
+    <model name="tree_01_c2"><static>true</static><pose>8 35 12.2 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>1.5</radius><length>2.0</length></cylinder></geometry><material><ambient>0.14 0.30 0.12 1</ambient><diffuse>0.16 0.35 0.14 1</diffuse></material></visual></link></model>
+    <model name="tree_01_c3"><static>true</static><pose>8 35 13.5 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>0.7</radius><length>1.5</length></cylinder></geometry><material><ambient>0.16 0.32 0.14 1</ambient><diffuse>0.18 0.38 0.16 1</diffuse></material></visual></link></model>
+
+    <!-- Tree 2 -->
+    <model name="tree_02"><static>true</static><pose>-5 38 8 0 0 0</pose>
+      <link name="trunk"><visual name="v"><geometry><cylinder><radius>0.20</radius><length>4.0</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual><collision name="c"><geometry><cylinder><radius>0.20</radius><length>4.0</length></cylinder></geometry></collision></link></model>
+    <model name="tree_02_c1"><static>true</static><pose>-5 38 11.2 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>2.5</radius><length>2.8</length></cylinder></geometry><material><ambient>0.10 0.25 0.09 1</ambient><diffuse>0.12 0.29 0.11 1</diffuse></material></visual></link></model>
+    <model name="tree_02_c2"><static>true</static><pose>-5 38 13.2 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>1.6</radius><length>2.2</length></cylinder></geometry><material><ambient>0.13 0.29 0.11 1</ambient><diffuse>0.15 0.33 0.13 1</diffuse></material></visual></link></model>
+    <model name="tree_02_c3"><static>true</static><pose>-5 38 14.8 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>0.8</radius><length>1.6</length></cylinder></geometry><material><ambient>0.15 0.31 0.13 1</ambient><diffuse>0.17 0.36 0.15 1</diffuse></material></visual></link></model>
+
+    <!-- Tree 3 -->
+    <model name="tree_03"><static>true</static><pose>15 44 14 0 0 0</pose>
+      <link name="trunk"><visual name="v"><geometry><cylinder><radius>0.16</radius><length>3.0</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual><collision name="c"><geometry><cylinder><radius>0.16</radius><length>3.0</length></cylinder></geometry></collision></link></model>
+    <model name="tree_03_c1"><static>true</static><pose>15 44 16.7 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>2.0</radius><length>2.4</length></cylinder></geometry><material><ambient>0.11 0.27 0.10 1</ambient><diffuse>0.13 0.31 0.12 1</diffuse></material></visual></link></model>
+    <model name="tree_03_c2"><static>true</static><pose>15 44 18.4 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>1.2</radius><length>1.8</length></cylinder></geometry><material><ambient>0.14 0.30 0.12 1</ambient><diffuse>0.16 0.35 0.14 1</diffuse></material></visual></link></model>
+
+    <!-- Tree 4 -->
+    <model name="tree_04"><static>true</static><pose>-18 28 5 0 0 0</pose>
+      <link name="trunk"><visual name="v"><geometry><cylinder><radius>0.22</radius><length>4.5</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual><collision name="c"><geometry><cylinder><radius>0.22</radius><length>4.5</length></cylinder></geometry></collision></link></model>
+    <model name="tree_04_c1"><static>true</static><pose>-18 28 8.5 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>2.8</radius><length>3.0</length></cylinder></geometry><material><ambient>0.10 0.24 0.09 1</ambient><diffuse>0.12 0.28 0.11 1</diffuse></material></visual></link></model>
+    <model name="tree_04_c2"><static>true</static><pose>-18 28 10.8 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>1.8</radius><length>2.4</length></cylinder></geometry><material><ambient>0.13 0.28 0.11 1</ambient><diffuse>0.15 0.33 0.13 1</diffuse></material></visual></link></model>
+    <model name="tree_04_c3"><static>true</static><pose>-18 28 12.5 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>0.9</radius><length>1.8</length></cylinder></geometry><material><ambient>0.16 0.32 0.14 1</ambient><diffuse>0.18 0.38 0.16 1</diffuse></material></visual></link></model>
+
+    <!-- Tree 5 -->
+    <model name="tree_05"><static>true</static><pose>28 -8 6 0 0 0</pose>
+      <link name="trunk"><visual name="v"><geometry><cylinder><radius>0.19</radius><length>3.8</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual><collision name="c"><geometry><cylinder><radius>0.19</radius><length>3.8</length></cylinder></geometry></collision></link></model>
+    <model name="tree_05_c1"><static>true</static><pose>28 -8 10.0 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>2.3</radius><length>2.6</length></cylinder></geometry><material><ambient>0.11 0.26 0.10 1</ambient><diffuse>0.13 0.30 0.12 1</diffuse></material></visual></link></model>
+    <model name="tree_05_c2"><static>true</static><pose>28 -8 11.9 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>1.4</radius><length>2.0</length></cylinder></geometry><material><ambient>0.14 0.30 0.12 1</ambient><diffuse>0.16 0.35 0.14 1</diffuse></material></visual></link></model>
+
+    <!-- Trees 6-10 (compact entries) -->
+    <model name="tree_06"><static>true</static><pose>-8 15 0 0 0 0</pose><link name="trunk"><visual name="v"><geometry><cylinder><radius>0.18</radius><length>3.5</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_06_can"><static>true</static><pose>-8 15 3.5 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.1</radius><length>5.0</length></cylinder></geometry><material><ambient>0.12 0.27 0.10 1</ambient><diffuse>0.14 0.32 0.12 1</diffuse></material></visual></link></model>
+
+    <model name="tree_07"><static>true</static><pose>42 -5 6 0 0 0</pose><link name="trunk"><visual name="v"><geometry><cylinder><radius>0.17</radius><length>3.2</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_07_can"><static>true</static><pose>42 -5 8.2 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.0</radius><length>4.5</length></cylinder></geometry><material><ambient>0.11 0.26 0.10 1</ambient><diffuse>0.13 0.30 0.12 1</diffuse></material></visual></link></model>
+
+    <model name="tree_08"><static>true</static><pose>-25 10 0 0 0 0</pose><link name="trunk"><visual name="v"><geometry><cylinder><radius>0.21</radius><length>4.0</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_08_can"><static>true</static><pose>-25 10 5.2 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.5</radius><length>5.5</length></cylinder></geometry><material><ambient>0.10 0.24 0.09 1</ambient><diffuse>0.12 0.28 0.11 1</diffuse></material></visual></link></model>
+
+    <model name="tree_09"><static>true</static><pose>18 -22 4 0 0 0</pose><link name="trunk"><visual name="v"><geometry><cylinder><radius>0.19</radius><length>3.6</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_09_can"><static>true</static><pose>18 -22 7.0 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.2</radius><length>5.0</length></cylinder></geometry><material><ambient>0.12 0.27 0.10 1</ambient><diffuse>0.14 0.32 0.12 1</diffuse></material></visual></link></model>
+
+    <model name="tree_10"><static>true</static><pose>-12 50 8 0 0 0</pose><link name="trunk"><visual name="v"><geometry><cylinder><radius>0.20</radius><length>3.8</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_10_can"><static>true</static><pose>-12 50 9.8 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.4</radius><length>5.2</length></cylinder></geometry><material><ambient>0.11 0.26 0.10 1</ambient><diffuse>0.13 0.30 0.12 1</diffuse></material></visual></link></model>
+
+    <!-- Trees 11-15 -->
+    <model name="tree_11"><static>true</static><pose>3 55 8 0 0 0</pose><link name="t"><visual name="v"><geometry><cylinder><radius>0.18</radius><length>3.5</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_11_can"><static>true</static><pose>3 55 9.3 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.1</radius><length>4.8</length></cylinder></geometry><material><ambient>0.12 0.28 0.10 1</ambient><diffuse>0.14 0.33 0.12 1</diffuse></material></visual></link></model>
+
+    <model name="tree_12"><static>true</static><pose>-38 30 0 0 0 0</pose><link name="t"><visual name="v"><geometry><cylinder><radius>0.22</radius><length>4.2</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_12_can"><static>true</static><pose>-38 30 6.5 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.6</radius><length>5.8</length></cylinder></geometry><material><ambient>0.10 0.23 0.09 1</ambient><diffuse>0.12 0.27 0.11 1</diffuse></material></visual></link></model>
+
+    <model name="tree_13"><static>true</static><pose>50 5 0 0 0 0</pose><link name="t"><visual name="v"><geometry><cylinder><radius>0.17</radius><length>3.3</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_13_can"><static>true</static><pose>50 5 5.5 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.0</radius><length>4.5</length></cylinder></geometry><material><ambient>0.12 0.27 0.10 1</ambient><diffuse>0.14 0.31 0.12 1</diffuse></material></visual></link></model>
+
+    <model name="tree_14"><static>true</static><pose>-5 -20 0 0 0 0</pose><link name="t"><visual name="v"><geometry><cylinder><radius>0.20</radius><length>4.0</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_14_can"><static>true</static><pose>-5 -20 6.2 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.3</radius><length>5.2</length></cylinder></geometry><material><ambient>0.11 0.26 0.10 1</ambient><diffuse>0.13 0.30 0.12 1</diffuse></material></visual></link></model>
+
+    <model name="tree_15"><static>true</static><pose>30 50 8 0 0 0</pose><link name="t"><visual name="v"><geometry><cylinder><radius>0.19</radius><length>3.7</length></cylinder></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.32 0.20 0.10 1</diffuse></material></visual></link></model>
+    <model name="tree_15_can"><static>true</static><pose>30 50 9.5 0 0 0</pose><link name="l"><visual name="v"><geometry><cylinder><radius>2.2</radius><length>5.0</length></cylinder></geometry><material><ambient>0.12 0.28 0.10 1</ambient><diffuse>0.14 0.32 0.12 1</diffuse></material></visual></link></model>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         BOULDERS / ROCKS
+         ════════════════════════════════════════════════════════════════ -->
+    <model name="rock_1"><static>true</static><pose>12 48 14 0.3 0.1 0.5</pose>
+      <link name="l"><visual name="v"><geometry><box><size>2.5 2.0 1.5</size></box></geometry><material><ambient>0.45 0.40 0.35 1</ambient><diffuse>0.50 0.45 0.38 1</diffuse></material></visual><collision name="c"><geometry><box><size>2.5 2.0 1.5</size></box></geometry></collision></link></model>
+
+    <model name="rock_2"><static>true</static><pose>-22 24 5 0.1 0.2 1.2</pose>
+      <link name="l"><visual name="v"><geometry><box><size>3.0 2.5 1.8</size></box></geometry><material><ambient>0.42 0.38 0.32 1</ambient><diffuse>0.48 0.43 0.36 1</diffuse></material></visual><collision name="c"><geometry><box><size>3.0 2.5 1.8</size></box></geometry></collision></link></model>
+
+    <model name="rock_3"><static>true</static><pose>38 -12 6 0.2 0.1 0.8</pose>
+      <link name="l"><visual name="v"><geometry><box><size>2.0 1.8 1.2</size></box></geometry><material><ambient>0.44 0.39 0.33 1</ambient><diffuse>0.49 0.44 0.37 1</diffuse></material></visual><collision name="c"><geometry><box><size>2.0 1.8 1.2</size></box></geometry></collision></link></model>
+
+    <model name="rock_4"><static>true</static><pose>-8 44 8 0.0 0.3 0.3</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1.8 1.5 1.0</size></box></geometry><material><ambient>0.43 0.38 0.33 1</ambient><diffuse>0.47 0.42 0.36 1</diffuse></material></visual><collision name="c"><geometry><box><size>1.8 1.5 1.0</size></box></geometry></collision></link></model>
+
+    <model name="rock_5"><static>true</static><pose>5 -15 0 0.1 0.2 1.0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>2.8 2.2 1.6</size></box></geometry><material><ambient>0.44 0.40 0.34 1</ambient><diffuse>0.50 0.45 0.38 1</diffuse></material></visual><collision name="c"><geometry><box><size>2.8 2.2 1.6</size></box></geometry></collision></link></model>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SURVIVOR MARKERS — 3 persons in orange hi-vis
+         Each survivor has: body + arms + hi-vis vest + emergency tarp
+         ════════════════════════════════════════════════════════════════ -->
+
+    <!-- Survivor 1 — on hill slope, north area -->
+    <model name="survivor_1_body">
+      <static>true</static>
+      <pose>10 38 8.2 0 0 0</pose>
+      <link name="link">
+        <visual name="torso">
+          <geometry><cylinder><radius>0.22</radius><length>0.9</length></cylinder></geometry>
+          <material><ambient>1.0 0.35 0.0 1</ambient><diffuse>1.0 0.40 0.0 1</diffuse></material>
+        </visual>
+        <collision name="c"><geometry><cylinder><radius>0.22</radius><length>0.9</length></cylinder></geometry></collision>
+      </link>
+    </model>
+    <model name="survivor_1_head">
+      <static>true</static>
+      <pose>10 38 8.85 0 0 0</pose>
+      <link name="link">
+        <visual name="head">
+          <geometry><sphere><radius>0.14</radius></sphere></geometry>
+          <material><ambient>0.85 0.65 0.50 1</ambient><diffuse>0.85 0.65 0.50 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- Orange emergency tarp next to survivor 1 -->
+    <model name="survivor_1_tarp">
+      <static>true</static>
+      <pose>10.8 38 8.05 0 0 0.3</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>2.0 1.2 0.04</size></box></geometry>
+          <material><ambient>1.0 0.20 0.0 1</ambient><diffuse>1.0 0.25 0.0 1</diffuse></material>
+        </visual>
+        <collision name="c"><geometry><box><size>2.0 1.2 0.04</size></box></geometry></collision>
+      </link>
+    </model>
+    <!-- SOS sign -->
+    <model name="survivor_1_sos">
+      <static>true</static>
+      <pose>9 36 8.01 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>3.0 1.0 0.02</size></box></geometry>
+          <material><ambient>1.0 1.0 0.0 1</ambient><diffuse>1.0 1.0 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Survivor 2 — valley floor, east area -->
+    <model name="survivor_2_body">
+      <static>true</static>
+      <pose>35 -5 0.45 1.4 0 0</pose>
+      <link name="link">
+        <visual name="torso">
+          <geometry><cylinder><radius>0.22</radius><length>0.9</length></cylinder></geometry>
+          <material><ambient>1.0 0.35 0.0 1</ambient><diffuse>1.0 0.40 0.0 1</diffuse></material>
+        </visual>
+        <collision name="c"><geometry><cylinder><radius>0.22</radius><length>0.9</length></cylinder></geometry></collision>
+      </link>
+    </model>
+    <model name="survivor_2_tarp">
+      <static>true</static>
+      <pose>36 -5 0.02 0 0 0.8</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>2.2 1.0 0.04</size></box></geometry>
+          <material><ambient>1.0 0.20 0.0 1</ambient><diffuse>1.0 0.25 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="survivor_2_signal">
+      <static>true</static>
+      <pose>33 -6 0.01 0 0 1.2</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>2.5 0.8 0.02</size></box></geometry>
+          <material><ambient>1.0 1.0 0.0 1</ambient><diffuse>1.0 1.0 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Survivor 3 — west hill slope -->
+    <model name="survivor_3_body">
+      <static>true</static>
+      <pose>-28 22 5.45 0 0 0</pose>
+      <link name="link">
+        <visual name="torso">
+          <geometry><cylinder><radius>0.22</radius><length>0.9</length></cylinder></geometry>
+          <material><ambient>1.0 0.35 0.0 1</ambient><diffuse>1.0 0.40 0.0 1</diffuse></material>
+        </visual>
+        <collision name="c"><geometry><cylinder><radius>0.22</radius><length>0.9</length></cylinder></geometry></collision>
+      </link>
+    </model>
+    <model name="survivor_3_tarp">
+      <static>true</static>
+      <pose>-27.5 21 5.02 0 0 0.5</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>2.0 1.2 0.04</size></box></geometry>
+          <material><ambient>1.0 0.20 0.0 1</ambient><diffuse>1.0 0.25 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="survivor_3_signal">
+      <static>true</static>
+      <pose>-30 23 5.01 0 0 0.2</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>2.5 0.8 0.02</size></box></geometry>
+          <material><ambient>1.0 1.0 0.0 1</ambient><diffuse>1.0 1.0 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         BASE CAMP — drone launch area
+         ════════════════════════════════════════════════════════════════ -->
+    <model name="base_camp_pad">
+      <static>true</static>
+      <pose>0 0 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>3.0</radius><length>0.02</length></cylinder></geometry>
+          <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.65 0.65 0.65 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="base_camp_H">
+      <static>true</static>
+      <pose>0 0 0.03 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>3.0 0.4 0.02</size></box></geometry>
+          <material><ambient>1.0 0.9 0.0 1</ambient><diffuse>1.0 0.9 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="base_camp_tent">
+      <static>true</static>
+      <pose>-6 0 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>3.5 2.5 1.5</size></box></geometry>
+          <material><ambient>0.2 0.5 0.8 1</ambient><diffuse>0.25 0.55 0.85 1</diffuse></material>
+        </visual>
+        <collision name="c"><geometry><box><size>3.5 2.5 1.5</size></box></geometry></collision>
+      </link>
+    </model>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         IRIS DRONE with ArduPilot plugin
+         ════════════════════════════════════════════════════════════════ -->
+    <include>
+      <uri>model://iris_with_ardupilot</uri>
+      <name>iris_with_ardupilot</name>
+      <pose>0 0 0.195 0 0 0</pose>
+    </include>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         PARACHUTE MODEL
+         Starts hidden at z=-10. Bridge moves it above drone on fault.
+         Orange canopy + 4 suspension lines + blue payload box
+         ════════════════════════════════════════════════════════════════ -->
+    <model name="parachute">
+      <pose>0 0 -10 0 0 0</pose>
+      <static>false</static>
+      <link name="canopy">
+        <inertial>
+          <mass>0.15</mass>
+          <inertia>
+            <ixx>0.03</ixx><iyy>0.03</iyy><izz>0.03</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+          </inertia>
+        </inertial>
+
+        <!-- Main dome -->
+        <visual name="dome">
+          <geometry><sphere><radius>1.1</radius></sphere></geometry>
+          <material>
+            <ambient>1.0 0.38 0.0 0.85</ambient>
+            <diffuse>1.0 0.38 0.0 0.85</diffuse>
+          </material>
+        </visual>
+        <collision name="dome_col">
+          <geometry><sphere><radius>1.1</radius></sphere></geometry>
+        </collision>
+
+        <!-- Canopy panels — alternating colour stripes -->
+        <visual name="stripe_1">
+          <pose>0.5 0 -0.3 0 0.4 0</pose>
+          <geometry><cylinder><radius>0.12</radius><length>1.8</length></cylinder></geometry>
+          <material><ambient>1.0 1.0 1.0 0.7</ambient><diffuse>1.0 1.0 1.0 0.7</diffuse></material>
+        </visual>
+        <visual name="stripe_2">
+          <pose>-0.5 0 -0.3 0 -0.4 0</pose>
+          <geometry><cylinder><radius>0.12</radius><length>1.8</length></cylinder></geometry>
+          <material><ambient>1.0 1.0 1.0 0.7</ambient><diffuse>1.0 1.0 1.0 0.7</diffuse></material>
+        </visual>
+        <visual name="stripe_3">
+          <pose>0 0.5 -0.3 0.4 0 0</pose>
+          <geometry><cylinder><radius>0.12</radius><length>1.8</length></cylinder></geometry>
+          <material><ambient>1.0 1.0 1.0 0.7</ambient><diffuse>1.0 1.0 1.0 0.7</diffuse></material>
+        </visual>
+
+        <!-- Suspension lines -->
+        <visual name="line_1">
+          <pose>0.30 0.30 -0.85 0 0.32 0.785</pose>
+          <geometry><cylinder><radius>0.007</radius><length>1.7</length></cylinder></geometry>
+          <material><ambient>0.9 0.9 0.9 1</ambient><diffuse>0.9 0.9 0.9 1</diffuse></material>
+        </visual>
+        <visual name="line_2">
+          <pose>-0.30 0.30 -0.85 0 -0.32 2.356</pose>
+          <geometry><cylinder><radius>0.007</radius><length>1.7</length></cylinder></geometry>
+          <material><ambient>0.9 0.9 0.9 1</ambient><diffuse>0.9 0.9 0.9 1</diffuse></material>
+        </visual>
+        <visual name="line_3">
+          <pose>-0.30 -0.30 -0.85 0 0.32 3.927</pose>
+          <geometry><cylinder><radius>0.007</radius><length>1.7</length></cylinder></geometry>
+          <material><ambient>0.9 0.9 0.9 1</ambient><diffuse>0.9 0.9 0.9 1</diffuse></material>
+        </visual>
+        <visual name="line_4">
+          <pose>0.30 -0.30 -0.85 0 -0.32 5.498</pose>
+          <geometry><cylinder><radius>0.007</radius><length>1.7</length></cylinder></geometry>
+          <material><ambient>0.9 0.9 0.9 1</ambient><diffuse>0.9 0.9 0.9 1</diffuse></material>
+        </visual>
+
+        <!-- Payload (drone hanging below) -->
+        <visual name="payload">
+          <pose>0 0 -1.9 0 0 0</pose>
+          <geometry><box><size>0.38 0.38 0.16</size></box></geometry>
+          <material><ambient>0.15 0.15 0.7 1</ambient><diffuse>0.15 0.15 0.7 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

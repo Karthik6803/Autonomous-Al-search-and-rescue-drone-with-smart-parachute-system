@@ -1,0 +1,8 @@
+# SAR Drone — Python dependencies
+# Install with: pip install -r requirements.txt
+
+dronekit==2.9.2
+pymavlink==2.4.40
+opencv-python==4.9.0.80
+numpy>=1.24
+flask
