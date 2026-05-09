@@ -1,0 +1,2 @@
+# Autonomous-Al-search-and-rescue-drone-with-smart-parachute-system
+This project presents the design, development, and simulation-based validation of an Autonomous Search and Rescue drone system integrated with a Smart Parachute Deployment mechanism, built to address one of the most critical challenges in modern disaster response — locating survivors in dangerous and inaccessible terrain without putting 
